@@ -26,6 +26,7 @@ from uuid import UUID
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from app.application.services.auth_service import AuthService
 from app.core.exceptions import AuthenticationError
 from app.core.security import decode_token
 from app.domain.entities.user import User
@@ -52,3 +53,9 @@ async def get_current_user(
     except AuthenticationError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
     return user
+
+
+def get_auth_service() -> AuthService:
+    db = get_database()
+    repo = MongoUserRepository(db)
+    return AuthService(repo)
