@@ -30,6 +30,7 @@ from app.application.services.auth_service import AuthService
 from app.core.exceptions import AuthenticationError
 from app.core.security import decode_token
 from app.domain.entities.user import User
+from app.infrastructure.cache.client import get_redis
 from app.infrastructure.db.client import get_database
 from app.infrastructure.db.repositories.user_repository import MongoUserRepository
 
@@ -57,5 +58,6 @@ async def get_current_user(
 
 def get_auth_service() -> AuthService:
     db = get_database()
+    redis = get_redis()
     repo = MongoUserRepository(db)
-    return AuthService(repo)
+    return AuthService(repo, redis)

@@ -18,10 +18,10 @@ Question to think about:
   HTTP-only cookie? What are the security tradeoffs?
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.deps import get_auth_service
-from app.application.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserResponse
+from app.application.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserResponse, RefreshRequest
 from app.application.services.auth_service import AuthService
 from app.core.exceptions import AuthenticationError, AlreadyExistsError
 
@@ -56,10 +56,20 @@ async def login(
 
 
 @router.post("/refresh", response_model=TokenResponse)
-async def refresh(refresh_token: str):
-    raise NotImplementedError
+async def refresh(
+        body: RefreshRequest,
+        auth_service: AuthService = Depends(get_auth_service)
+):
+    try:
+        access_token = await auth_service.refresh(body.refresh_token)
+    except AuthenticationError:
+        raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
+    return TokenResponse(access_token=access_token, refresh_token=body.refresh_token)
 
 
 @router.post("/logout", status_code=204)
-async def logout(refresh_token: str):
-    raise NotImplementedError
+async def logout(
+        body: RefreshRequest,
+        auth_service: AuthService = Depends(get_auth_service)
+):
+    await auth_service.logout(body.refresh_token)
